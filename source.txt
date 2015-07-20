@@ -1,0 +1,308 @@
+Stack Exchange sign up log in tour help  stack overflow careers  
+
+
+Stack Overflow
+Questions
+ 
+Tags
+ 
+Users
+ 
+Badges
+ 
+Unanswered
+ 
+Ask Question
+Take the 2-minute tour × Stack Overflow is a question and answer site for professional and enthusiast programmers. It's 100% free.
+Set default close operation on PApplet (Processing)
+
+up vote
+0
+down vote
+favorite
+There´s any methods to set the default close operation on PApplet?
+
+I tried to embed the PApplet in a JFrame, but it wont init correctly, i need to set the window to dont close at exit, in JFrame i can just set it to DO_NOTHING_ON_CLOSE, dont know how to do in a PApplet. I'm implementing a confirm exit dialog, and i just want to close only when i confirm.
+
+PApplet already have a frame, but it's not a JFrame, so i can´t just call setDefaultCloseOpreation.
+
+I´ve added an window listener to get the window closing action:
+
+//frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    frame.addWindowListener(new WindowAdapter() {
+        public void windowClosing(WindowEvent ev) {
+            int confirm = JOptionPane.showOptionDialog(frame,
+                    "Want to save all unsaved data?",
+                    "Exit confirmation", JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE, null, null, null);
+
+            switch(confirm) {
+            case JOptionPane.YES_OPTION:
+                System.out.println("Data saved, closing...");
+                break;
+            case JOptionPane.NO_OPTION:
+                System.out.println("Data lost, closing...");
+                break;
+            case JOptionPane.CANCEL_OPTION:
+                System.out.println("Close canceled.");
+                break;
+            }
+        }
+    });
+In the cancel option i want to close this dialog and keep open the application, this way without "do nothing on close" every option i choose close the application.
+
+java processing
+shareimprove this question
+asked Jan 17 '14 at 14:56
+
+Yuri Heupa
+325315
+add a comment
+3 Answers
+activeoldestvotes
+up vote
+0
+down vote
+The API documentation of PApplet at http://processing.org/reference/javadoc/core/processing/core/PApplet.html shows how a PApplet may be embedded into a Frame, and explicitly states that "...there's nothing to prevent you from embedding a PApplet into a JFrame". When you use a pattern according to the ExampleFrame shown there (but extending JFrame), you should be able to set the desired default close operation and attach your listener.
+
+shareimprove this answer
+answered Jan 17 '14 at 15:17
+
+Marco13
+20.8k41844
+add a comment
+up vote
+0
+down vote
+A while back I ran into this same problem. I'm not sure that this code solved it, but I think it helped? There are some window listeners already there, this code removes them. I also dimly recall having to run it after a few frames because they hadn't been initialized or something immediately after the program starts or something. You can give it a shot, anyway:
+
+  WindowListener[] wls = frame.getWindowListeners();
+  println("Removing " + wls.length + " window listeners.");
+  for (int i = 0; i < wls.length; i++) {
+    frame.removeWindowListener(wls[i]);
+  }
+  frame.addWindowListener(new WindowAdapter() {
+    public void windowClosing(WindowEvent we)
+    {
+      checkExit();
+    }
+  }
+  );
+shareimprove this answer
+answered Jan 17 '14 at 15:19
+
+kevinsa5
+1,7741720
+add a comment
+up vote
+0
+down vote
+accepted
+Solved this problem embedding the PApplet on JFrame, but as the example show in the processing documentation is very simple, it don´t work as expected.
+
+Here´s the code working:
+
+public class Application extends PApplet {
+
+public void setup() {
+    size(600, 480, JAVA2D);
+}
+
+public void draw() {
+    background(255);
+}
+
+public void closeApplication() {
+    exit();
+}
+
+public static void main(String _args[]) {
+
+    final JFrame frame = new JFrame("Embbed Applet");
+
+    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+    JPanel panel = new JPanel();
+
+    final Application applet = new Application();
+    applet.init();
+
+    panel.add(applet);
+    frame.add(panel);
+    frame.setSize(600, 510);
+    frame.setResizable(false);
+
+    frame.addWindowListener(new WindowAdapter() {
+        public void windowClosing(WindowEvent ev) {
+            int confirm = JOptionPane.showOptionDialog(frame,
+                "Want to save all unsaved data?",
+                "Exit confirmation", JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, null, null);
+            switch(confirm) {
+            case JOptionPane.YES_OPTION:
+                // Save data
+                applet.closeApplication();
+                System.exit(0);
+                break;
+            case JOptionPane.NO_OPTION:
+                applet.closeApplication();
+                System.exit(0);
+                break;
+            case JOptionPane.CANCEL_OPTION:
+                // Do nothing
+                break;
+            }
+        }
+    });
+
+    frame.setVisible(true);
+
+}
+shareimprove this answer
+answered Jan 17 '14 at 18:29
+
+Yuri Heupa
+325315
+add a comment
+Your Answer
+
+
+ 
+Sign up or log in
+
+Sign up using Google
+Sign up using Facebook
+Sign up using Stack Exchange
+Post as a guest
+
+Name
+
+Email
+
+ 
+By posting your answer, you agree to the privacy policy and terms of service.
+
+Not the answer you're looking for?	Browse other questions tagged java processing or ask your own question.
+
+asked
+
+1 year ago
+
+viewed
+
+336 times
+
+active
+
+1 year ago
+
+Want an android job?
+Senior Software Engineer
+Appian
+Reston, VA / relocation
+androidjava
+Android Developer, mobile and online identity masking guru.
+Snayer
+Washington, DC / remote
+androidpeer-to-peer
+Get the weekly newsletter!
+
+Top questions and answers
+Important announcements
+Unanswered questions
+
+see an example newsletter
+
+Related
+
+0 How to add a Processing PApplet in SWT
+12 Processing vs. (plain) Java
+0 Continuous image loading/processing & display on button click (in Swing)
+2095 Java += operator
+11369 Why is processing a sorted array faster than an unsorted array?
+0 How to destroy Processing PApplet without calling exit()?
+0 How to make PApplet doesn't show a window
+1 Processing Library for Java in Netbeans - load an image without extending PApplet
+2 Declare a static instance of PApplet?
+0 Processing Serial Read from Arduino causing Java PApplet error
+Hot Network Questions
+
+Why should our website be made handicap accessible?
+Suggestions for when practice has plateaued
+The anatomy of a Cycles render?
+Maximize the area of a triangle inscribed in a semicircle.
+How to compute an expected value in shorter ways (when taking all possibilities into account isn't plausible.)
+Why does Agent Smith get scared in the final confrontation with Neo?
+Can anybody cash my check by using an ATM? Does the machine check the name of the check and debit card?
+Is it offensive to ask my PhD advisor for permission to record research/technical discussions?
+What the difference in CVs between "submitted to" and "to appear in"?
+Is the phrase "refuse to accept" redundant?
+Count from 1 to n in Negabinary and Negaquaternary
+Why are Thestrals not a threat to humans?
+Why is it hard to take a high quality image of Pluto from a high-tech space telescope?
+How do you say "geek"/"IT guy" in German?
+Counting from 1 to an Integer… in Binary
+How to best upgrade your Towel for military combat
+Iterate JSON GIF collection array to HTML file
+If my 4-year-old asks me "why", what kind of "why" does he mean?
+A word that means that a germ or disease can affect a species
+Dynamic casting of SObject objects?
+Power player is a problem. Any fix?
+Where can I take a selfie with kangaroos in Australia?
+Recursive and iterative approach for mergesort
+Does more knowledge enhance your chance of doing better and 'original' research?
+question feed
+tour help blog chat data legal privacy policy work here advertising info mobile contact us feedback
+TECHNOLOGY	LIFE / ARTS	CULTURE / RECREATION	SCIENCE	OTHER
+Stack Overflow
+Server Fault
+Super User
+Web Applications
+Ask Ubuntu
+Webmasters
+Game Development
+TeX - LaTeX
+Programmers
+Unix & Linux
+Ask Different (Apple)
+WordPress Development
+Geographic Information Systems
+Electrical Engineering
+Android Enthusiasts
+Information Security
+Database Administrators
+Drupal Answers
+SharePoint
+User Experience
+Mathematica
+Salesforce
+more (14)
+Photography
+Science Fiction & Fantasy
+Graphic Design
+Seasoned Advice (cooking)
+Home Improvement
+Personal Finance & Money
+Academia
+more (10)
+English Language & Usage
+Skeptics
+Mi Yodeya (Judaism)
+Travel
+Christianity
+Arqade (gaming)
+Bicycles
+Role-playing Games
+more (21)
+Mathematics
+Cross Validated (stats)
+Theoretical Computer Science
+Physics
+MathOverflow
+more (7)
+Stack Apps
+Meta Stack Exchange
+Area 51
+Stack Overflow Careers
+site design / logo © 2015 stack exchange inc; user contributions licensed under cc by-sa 3.0 with attribution required
+rev 2015.7.17.2740
